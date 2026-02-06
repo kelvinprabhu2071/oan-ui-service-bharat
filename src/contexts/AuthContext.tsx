@@ -55,10 +55,6 @@ a37S+srKe59wFypSMOU+ZMvgFA2oK0zA1WEC93000n5HEQMJU8r7pCgKhq7oD8QJ
 hwIDAQAB
 -----END PUBLIC KEY-----`;
 
-  // Hardcoded placeholder JWT for guest users
-  // This is a placeholder token that will be used until a real JWT is requested
-  const GUEST_JWT_PLACEHOLDER = 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJndWVzdCIsInVzZXJuYW1lIjoiZ3Vlc3QiLCJlbWFpbCI6Imd1ZXN0QGV4YW1wbGUuY29tIiwiaXNHdWVzdCI6dHJ1ZX0.guest_signature';
-
   // Store JWT in localStorage with expiration
   const storeJWT = (token: string) => {
     try {
@@ -79,20 +75,6 @@ hwIDAQAB
     }
   };
 
-  // Create a guest user when no token is available
-  const createGuestUser = useCallback(() => {
-    // Store the hardcoded placeholder JWT token
-    storeJWT(GUEST_JWT_PLACEHOLDER);
-    
-    // Set guest user state
-    setUser({
-      username: 'guest',
-      email: 'guest@example.com',
-      authenticated: false,
-      isGuest: true,
-    });
-  }, []);
-
   // Fetch new JWT token from /chat/auth and store it
   const fetchAndStoreNewToken = useCallback(async (importedPublicKey: CryptoKey | null) => {
     try {
@@ -110,7 +92,6 @@ hwIDAQAB
           createUserFromPayload(result.payload);
         } else {
           console.error('Received invalid token from /chat/auth');
-          createGuestUser();
         }
       } else {
         // If public key is not available, store token anyway
@@ -125,9 +106,8 @@ hwIDAQAB
       }
     } catch (error) {
       console.error('Failed to fetch auth token from /chat/auth:', error);
-      createGuestUser();
     }
-  }, [createGuestUser]);
+  }, []);
 
   // Initialize auth state on component mount
   useEffect(() => {
@@ -185,14 +165,13 @@ hwIDAQAB
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
-        createGuestUser();
       } finally {
         setIsLoading(false);
       }
     };
 
     initAuth();
-  }, [publicKeyPEM, createGuestUser, fetchAndStoreNewToken]);
+  }, [publicKeyPEM, fetchAndStoreNewToken]);
 
   // Create a user object from JWT payload
   const createUserFromPayload = (payload: JWTPayload | null) => {
