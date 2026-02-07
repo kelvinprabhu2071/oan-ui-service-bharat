@@ -70,7 +70,7 @@ jobs:
           ENV_PREFIX=$(echo "$BRANCH" | cut -d'-' -f1)
           BUILD_TYPE=$(echo "$BRANCH" | cut -d'-' -f2)
           
-          echo "IMAGE_NAME=${ENV_PREFIX}-${{ env.BASE_IMAGE_NAME }}" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME=${{ env.BASE_IMAGE_NAME }}" >> $GITHUB_OUTPUT
           echo "BUILD_TAG=${BUILD_TYPE}" >> $GITHUB_OUTPUT
           echo "LATEST_TAG=${BUILD_TYPE}-latest" >> $GITHUB_OUTPUT
 
