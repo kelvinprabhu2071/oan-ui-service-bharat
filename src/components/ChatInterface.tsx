@@ -773,7 +773,7 @@ export function ChatInterface() {
     setShowFeedbackDialog(true);
   };
 
-  const handleLike = (
+  const handleLike = async (
     messageId: string,
     questionText: string,
     responseText: string,
@@ -786,7 +786,7 @@ export function ChatInterface() {
     setFeedbackResponseText(responseText);
 
     // Send telemetry for the like event
-    startTelemetry(sessionId, {
+    await startTelemetry(sessionId, {
       preferred_username: user?.username || "default-username",
       email: user?.email || "default-email",
     });
@@ -807,7 +807,7 @@ export function ChatInterface() {
     });
   };
 
-  const submitFeedback = () => {
+  const submitFeedback = async () => {
     const message = messages.find((m) => m.id === dislikedMessageId);
     if (!message) return;
 
@@ -816,7 +816,7 @@ export function ChatInterface() {
       description: t("toast.feedbackSubmitted.description") as string,
     });
 
-    startTelemetry(sessionId, {
+    await startTelemetry(sessionId, {
       preferred_username: user?.username || "default-username",
       email: user?.email || "default-email",
     });
