@@ -8,21 +8,14 @@ interface AudioState {
   [key: string]: 'idle' | 'loading' | 'ready' | 'playing';
 }
 
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = window.atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
+
 
 export function useTts() {
   const [audioState, setAudioState] = useState<AudioState>({});
   const audioCache = useRef(new Map<string, ArrayBuffer>());
   const pendingPlayRequests = useRef(new Map<string, boolean>());
   const { language, t } = useLanguage();
-  const { play, stop, isPlaying, currentMessageId, startStream, appendToStream, endStream } = useAudioPlayer();
+  const { play, stop, isPlaying, currentMessageId } = useAudioPlayer();
 
   const updateAudioState = useCallback((messageId: string, state: 'idle' | 'loading' | 'ready' | 'playing') => {
     setAudioState(prev => ({
@@ -78,24 +71,17 @@ export function useTts() {
       // Get the session ID from the API service
       const sessionId = apiService.getSessionId() || '';
       
-      // Attempt streaming first. If not supported, fallback to non-streaming.
-      const streamingSupported = startStream(messageId, 'audio/mpeg');
+      // Collect the full audio data without MediaSource streaming.
+      // The TTS API returns a complete JSON response, so MediaSource streaming
+      // is unreliable here (especially with WAV audio format).
       const collected = await apiService.streamTranscript(
         sessionId,
         text,
         language,
-        (bytes) => {
-          if (!pendingPlayRequests.current.get(messageId)) return;
-          if (streamingSupported) {
-            appendToStream(bytes);
-          }
-        }
+        () => {} // no-op: we play from the full collected buffer below
       );
-      // finalize stream
-      if (streamingSupported) {
-        endStream();
-      }
-      // Cache and optionally auto play from full data if not played already
+
+      // Play from the full collected buffer
       if (collected && collected.length > 0) {
         const audioBuffer = collected.buffer.slice(collected.byteOffset, collected.byteOffset + collected.byteLength);
         audioCache.current.set(messageId, audioBuffer as ArrayBuffer);
@@ -103,13 +89,7 @@ export function useTts() {
           return;
         }
         pendingPlayRequests.current.delete(messageId);
-        // If streaming already started playing, let it continue and wait for natural end
-        // If not streaming, play from buffer
-        if (!streamingSupported) {
-          return playAudioFromBuffer(audioBuffer as ArrayBuffer, messageId);
-        }
-        // For streaming: audio is already playing, state will be updated when it ends naturally
-        return;
+        return playAudioFromBuffer(audioBuffer as ArrayBuffer, messageId);
       }
       throw new Error('No audio data received');
     } catch (error) {
