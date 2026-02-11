@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:22-alpine AS build
+FROM node:22.17.1-alpine AS build
 WORKDIR /usr/local/app
 COPY package.json ./
 RUN npm install
@@ -17,4 +17,4 @@ EXPOSE 8081
 CMD ["nginx", "-g", "daemon off;"]
 
 # docker build --platform linux/amd64 -t vistaar-ui-service-latest .
-# docker save vistaar-ui-service-latest > vistaar-ui-service-latest.tar.gz
+# docker save vistaar-ui-service-latest > vistaar-ui-service-latest.tar
