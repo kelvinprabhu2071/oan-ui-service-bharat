@@ -274,60 +274,23 @@ export function ChatInterface() {
     }
   };
 
-  // Get user location
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const locationData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
-          apiService.setLocationData(locationData);
-        },
-        (error) => {
-          console.log("Unable to retrieve location:", error);
-
-          // Show toast notification based on the error
-          // switch(error.code) {
-          //   case error.PERMISSION_DENIED:
-          //     toast({
-          //       title: t("toast.locationPermissionDenied.title") as string,
-          //       description: t("toast.locationPermissionDenied.description") as string,
-          //       variant: "yellow",
-          //     });
-          //     break;
-          //   case error.POSITION_UNAVAILABLE:
-          //     toast({
-          //       title: t("toast.locationUnavailable.title") as string,
-          //       description: t("toast.locationUnavailable.description") as string,
-          //       variant: "yellow",
-          //     });
-          //     break;
-          //   case error.TIMEOUT:
-          //     toast({
-          //       title: t("toast.locationTimeout.title") as string,
-          //       description: t("toast.locationTimeout.description") as string,
-          //       variant: "yellow",
-          //     });
-          //     break;
-          //   default:
-          //     toast({
-          //       title: t("toast.locationError.title") as string,
-          //       description: t("toast.locationError.description") as string,
-          //       variant: "yellow",
-          //     });
-          // }
-        },
-      );
-    } else {
-      // toast({
-      //   title: t("toast.locationNotSupported.title") as string,
-      //   description: t("toast.locationNotSupported.description") as string,
-      //   variant: "yellow",
-      // });
-    }
-  };
+  // Geolocation disabled as location is not being used
+  // const getUserLocation = () => {
+  //   if (navigator.geolocation) {
+  //     navigator.geolocation.getCurrentPosition(
+  //       (position) => {
+  //         const locationData = {
+  //           latitude: position.coords.latitude,
+  //           longitude: position.coords.longitude,
+  //         };
+  //         apiService.setLocationData(locationData);
+  //       },
+  //       (error) => {
+  //         console.log("Unable to retrieve location:", error);
+  //       }
+  //     );
+  //   }
+  // };
 
   // Fetch suggestions for the chat - only called after a chat response
   const fetchSuggestions = async (currentSession = sessionId) => {
@@ -1010,9 +973,10 @@ export function ChatInterface() {
     createSession();
   }, [createSession]);
 
-  useEffect(() => {
-    getUserLocation();
-  }, []);
+  // Geolocation disabled as location is not being used
+  // useEffect(() => {
+  //   getUserLocation();
+  // }, []);
 
   useEffect(() => {
     // Don't auto-scroll when keyboard is open on mobile
