@@ -5,7 +5,7 @@ import { getBrowserInfo } from '@/lib/utils';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
-const JWT_EXPIRY_DAYS = 365; // 1 year expiration
+const JWT_EXPIRY_MINUTES = 20; // 20 minutes expiration
 
 // User interface that contains the essential user information
 export interface User {
@@ -60,7 +60,7 @@ hwIDAQAB
     try {
       const now = new Date();
       const expiryDate = new Date(now);
-      expiryDate.setDate(now.getDate() + JWT_EXPIRY_DAYS);
+      expiryDate.setMinutes(now.getMinutes() + JWT_EXPIRY_MINUTES);
       
       const tokenData = {
         token,
