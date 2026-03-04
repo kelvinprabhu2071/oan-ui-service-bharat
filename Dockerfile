@@ -20,7 +20,7 @@ ENV VITE_BYPASS_AUTH_ROLE=$VITE_BYPASS_AUTH_ROLE
 ENV VITE_TELEMETRY_HOST=$VITE_TELEMETRY_HOST
 
 COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile
+RUN bun install
 
 COPY . .
 RUN bun run build
