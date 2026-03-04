@@ -2,6 +2,14 @@ import { createContext, useContext, ReactNode, useState, useEffect, useCallback 
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
 import apiService from '@/lib/api';
 import { getBrowserInfo } from '@/lib/utils';
+import {
+  BYPASS_AUTH,
+  AUTH_TOKEN,
+  BYPASS_AUTH_MOBILE,
+  BYPASS_AUTH_NAME,
+  BYPASS_AUTH_ROLE,
+  BYPASS_AUTH_METADATA,
+} from '@/config/env';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
@@ -114,6 +122,56 @@ hwIDAQAB
     const initAuth = async () => {
       try {
         setIsLoading(true);
+
+        // --- Bypass Auth Mode ---
+        // When VITE_BYPASS_AUTH=true, skip JWT validation entirely.
+        // Optionally use VITE_AUTH_TOKEN as the static bearer token for API calls.
+        if (BYPASS_AUTH) {
+          console.warn('[Auth] Bypass auth enabled — fetching token from /api/token');
+          try {
+            // Dynamically fetch a real access token using env-configured credentials
+            const { token: bypassToken, expires_in } = await apiService.fetchBypassToken({
+              mobile: BYPASS_AUTH_MOBILE,
+              name: BYPASS_AUTH_NAME,
+              role: BYPASS_AUTH_ROLE,
+              metadata: BYPASS_AUTH_METADATA,
+            });
+
+            // Store the fetched token with the server-provided expiry
+            const tokenData = {
+              token: bypassToken,
+              expiry: Date.now() + expires_in * 1000, // expires_in is in seconds
+            };
+            localStorage.setItem(JWT_STORAGE_KEY, JSON.stringify(tokenData));
+
+            // Update the ApiService auth header immediately
+            apiService.updateAuthToken();
+
+            console.info('[Auth] Bypass token acquired successfully');
+          } catch (err) {
+            console.error('[Auth] Failed to fetch bypass token:', err);
+            // Fallback: if a static AUTH_TOKEN is provided in env, use it
+            if (AUTH_TOKEN) {
+              const tokenData = {
+                token: AUTH_TOKEN,
+                expiry: new Date().getTime() + 24 * 60 * 60 * 1000,
+              };
+              localStorage.setItem(JWT_STORAGE_KEY, JSON.stringify(tokenData));
+              apiService.updateAuthToken();
+              console.warn('[Auth] Fell back to static VITE_AUTH_TOKEN');
+            }
+          }
+          setUser({
+            authenticated: true,
+            username: BYPASS_AUTH_NAME || 'Dev User',
+            email: 'dev@localhost',
+            isGuest: false,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // --- Normal Auth Flow ---
         // Import the public key
         const importedPublicKey = await importSPKI(publicKeyPEM, 'RS256');
         setPublicKey(importedPublicKey);

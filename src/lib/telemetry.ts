@@ -1,6 +1,17 @@
 // --- V3 Telemetry Specification Alignment ---
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { UAParser } from "ua-parser-js";
+import {
+  TELEMETRY_HOST,
+} from "@/config/env";
+
+// Telemetry constants (non-configurable)
+const TELEMETRY_KEY = "";
+const TELEMETRY_SECRET = "";
+const TELEMETRY_CHANNEL = "BharatVistaar";
+const TELEMETRY_PRODUCT_ID = "BharatVistaar";
+const TELEMETRY_PRODUCT_VERSION = "v0.1";
+const TELEMETRY_PRODUCT_PID = "BharatVistaar";
 
 // FingerprintJS initialization
 
@@ -148,25 +159,23 @@ export const startTelemetry = async (
 
   initChatApiPerformanceObserver();
 
-  const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
-  const secret = "gnjhgjugkk";
   const config = {
     pdata: {
-      id: "BharatVistaar",
-      ver: "v0.1",
-      pid: "BharatVistaar",
+      id: TELEMETRY_PRODUCT_ID,
+      ver: TELEMETRY_PRODUCT_VERSION,
+      pid: TELEMETRY_PRODUCT_PID,
     },
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: TELEMETRY_CHANNEL + "-" + getHostUrl(),
     sid: sessionId,
     uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
     did: userDetailsObj["email"] || "DEFAULT-USER",
     authtoken: "",
-    host: "/observability-service",
+    host: TELEMETRY_HOST,
   };
 
   const startEdata = {};
   const options = {};
-  const token = AuthTokenGenerate.generate(key, secret);
+  const token = AuthTokenGenerate.generate(TELEMETRY_KEY, TELEMETRY_SECRET);
   config.authtoken = token;
   Telemetry.start(config, "content_id", "contetn_ver", startEdata, options);
 };
@@ -216,7 +225,7 @@ export const logQuestionEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: TELEMETRY_CHANNEL + "-" + getHostUrl(),
   };
 
   Telemetry.response(questionData);
@@ -263,7 +272,7 @@ export const logResponseEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: TELEMETRY_CHANNEL + "-" + getHostUrl(),
     values: [],
   };
 
@@ -294,7 +303,7 @@ export const logErrorEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: TELEMETRY_CHANNEL + "-" + getHostUrl(),
   };
 
   Telemetry.response(errorData);
@@ -330,7 +339,7 @@ export const logFeedbackEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: TELEMETRY_CHANNEL + "-" + getHostUrl(),
   };
 
   Telemetry.response(feedbackData);

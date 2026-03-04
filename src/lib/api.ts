@@ -7,6 +7,15 @@ import {
   type RetryConfig,
 } from "./retry-utils";
 import { API_RETRY_CONFIG } from "@/config/retry";
+import {
+  API_URL,
+  BYPASS_AUTH,
+  AUTH_TOKEN,
+  BYPASS_AUTH_MOBILE,
+  BYPASS_AUTH_NAME,
+  BYPASS_AUTH_ROLE,
+  BYPASS_AUTH_METADATA,
+} from "@/config/env";
 
 export interface LocationData {
   latitude: number;
@@ -42,7 +51,7 @@ interface AuthResponse {
 const JWT_STORAGE_KEY = "auth_jwt";
 
 class ApiService {
-  private apiUrl: string = "";
+  private apiUrl: string = API_URL;
   private locationData: LocationData | null = null;
   private currentSessionId: string | null = null;
   private axiosInstance: AxiosInstance;
@@ -64,6 +73,8 @@ class ApiService {
   }
 
   private getAuthToken(): string | null {
+    // In bypass auth mode, the token is fetched dynamically from /api/token
+    // and stored in localStorage by AuthContext. Fall through to localStorage lookup.
     try {
       const tokenData = localStorage.getItem(JWT_STORAGE_KEY);
       if (!tokenData) return null;
@@ -90,6 +101,9 @@ class ApiService {
       this.axiosInstance.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${this.authToken}`;
+    } else if (BYPASS_AUTH) {
+      // In bypass mode without a token, use "NA" but don't redirect
+      this.axiosInstance.defaults.headers.common["Authorization"] = "NA";
     } else {
       this.axiosInstance.defaults.headers.common["Authorization"] = "NA";
       this.redirectToErrorPage();
@@ -119,6 +133,8 @@ class ApiService {
   }
 
   private validateAuth(): boolean {
+    // Skip auth validation in bypass mode
+    if (BYPASS_AUTH) return true;
     if (!this.authToken) {
       this.redirectToErrorPage();
       return false;
@@ -534,6 +550,40 @@ class ApiService {
       throw new Error("No token received from auth endpoint");
     } catch (error) {
       console.error("Error fetching auth token:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch a bypass/dev token from POST /api/token using the full payload.
+   * Used when BYPASS_AUTH=true to dynamically obtain a real access token.
+   */
+  async fetchBypassToken(payload: {
+    mobile: string;
+    name: string;
+    role: string;
+    metadata: string | null;
+  }): Promise<{ token: string; expires_in: number }> {
+    try {
+      const response = await axios.post<{ token: string; expires_in: number }>(
+        `${this.apiUrl}/api/token`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const token = response.data.token;
+      if (token) {
+        return { token, expires_in: response.data.expires_in || 900 };
+      }
+
+      throw new Error("No token received from /api/token");
+    } catch (error) {
+      console.error("[Bypass Auth] Error fetching token from /api/token:", error);
       throw error;
     }
   }
