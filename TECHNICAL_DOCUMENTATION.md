@@ -87,6 +87,7 @@ graph TD
 ### Authentication Logic (`AuthContext.tsx`)
 The system uses a custom JWT-based authentication model supporting both guest and verified users.
 1.  **Initialization**: On load, checks for authentication via:
+    *   **Bypass Auth Mode** (`VITE_BYPASS_AUTH=true`): Calls `POST /api/token` with `{mobile, name, role, metadata}` (sourced from env vars) to dynamically obtain a real access token, stores it in localStorage, and updates the API service. Falls back to `VITE_AUTH_TOKEN` if the API call fails.
     *   **URL Param**: Checks for `?token=...`. If found, validates and stores it.
     *   **LocalStorage**: Checks for existing valid `auth_jwt`.
     *   **Guest Fallback**: If no token, fetches a new token from `/chat/auth` API.
@@ -136,6 +137,12 @@ Fetches audio for a given text.
 Obtains a temporary auth token for guest users.
 *   **Params**: `metadata` (string - browser info)
 *   **Returns**: `Promise<string>` (JWT Token)
+
+### `fetchBypassToken`
+Fetches a real access token for bypass/dev mode via `POST /api/token`.
+*   **Params**: `{ mobile: string, name: string, role: string, metadata: string | null }`
+*   **Returns**: `Promise<string>` (Access Token)
+*   **Behavior**: Accepts `access_token` or `token` from the response. Used by `AuthContext` when `BYPASS_AUTH=true`.
 
 ---
 
@@ -191,3 +198,4 @@ The output will be in the `dist/` directory, ready to be served by Nginx or anot
 ### Configuration
 *   **Environment Variables**: Check `.env.example` for required keys (usually API endpoints).
 *   **Public Key**: If changing the auth provider, ensure the Public Key in `AuthContext.tsx` matches the signing key of your token service.
+*   **Bypass Auth (Dev Mode)**: Set `VITE_BYPASS_AUTH=true` and optionally configure `VITE_BYPASS_AUTH_MOBILE`, `VITE_BYPASS_AUTH_NAME`, `VITE_BYPASS_AUTH_ROLE`, `VITE_BYPASS_AUTH_METADATA` to auto-generate a token from `POST /api/token` on startup.
